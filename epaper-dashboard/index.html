@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=800, height=480, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>E-paper Dashboard</title>
+    <link rel="stylesheet" href="/epaper/styles.css">
+    <script src="/epaper/script.js" defer></script>
+  </head>
+  <body>
+    <main class="dashboard" aria-label="800 by 480 e-paper dashboard">
+      <section class="top-strip" aria-label="status strip">
+        <article class="card today-card" aria-labelledby="today-title">
+          <div class="top-label" id="today-title">TODAY</div>
+          <div class="today-body">
+            <div class="date-day" id="date-day">02</div>
+            <div class="date-meta">
+              <div id="date-weekday">星期二</div>
+              <div><span id="date-year">2026</span>/<span id="date-month">06</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card mantra-card" aria-label="daily quote">
+          <div class="mantra-text" id="daily-quote">
+            <span>纸上得来终觉浅，绝知此事要躬行。</span>
+          </div>
+        </article>
+
+        <article class="card updated-card" aria-labelledby="updated-title">
+          <div class="top-label" id="updated-title">UPDATED</div>
+          <time class="updated-time" id="updated-time" datetime="08:30">08:30</time>
+        </article>
+      </section>
+
+      <section class="main-grid" aria-label="dashboard panels">
+        <article class="card weather-mouse-card" aria-label="weather and pixel mouse">
+          <section class="weather-panel" aria-labelledby="weather-title">
+            <h1 class="card-title" id="weather-title">天气</h1>
+            <div class="weather-body">
+              <div class="weather-location" id="weather-location">北京</div>
+              <div class="weather-temp" id="weather-temp">27°C</div>
+              <div class="weather-summary" id="weather-summary">多云转晴</div>
+              <dl class="weather-facts">
+                <div>
+                  <dt>体感</dt>
+                  <dd id="weather-feels">29°C</dd>
+                </div>
+                <div>
+                  <dt>降雨</dt>
+                  <dd id="weather-rain">10%</dd>
+                </div>
+                <div>
+                  <dt>风</dt>
+                  <dd id="weather-wind">东南 3 级</dd>
+                </div>
+                <div>
+                  <dt>AQI</dt>
+                  <dd id="weather-aqi">42</dd>
+                </div>
+              </dl>
+            </div>
+          </section>
+
+          <section class="mouse-panel">
+            <div class="mouse-stage">
+              <img src="data:image/png;base64,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" alt="icon" class="mouse-icon">
+            </div>
+            <div class="mouse-status">
+              <span>FOCUS</span>
+              <span>保持</span>
+              <span>电量</span>
+            </div>
+          </section>
+        </article>
+
+        <article class="card schedule-card" aria-labelledby="schedule-title">
+          <h2 class="card-title" id="schedule-title">每日安排</h2>
+          <div id="schedule-list" class="schedule-list" aria-live="polite"></div>
+        </article>
+
+        <article class="card focus-card" aria-labelledby="focus-title">
+          <h2 class="card-title" id="focus-title">FOCUS</h2>
+          <div class="focus-main" id="focus-mode">FOCUS MODE</div>
+          <div class="focus-text" id="focus-text">保持电量</div>
+          <div class="focus-sub" id="focus-sub">今日还有 4 个重点块</div>
+          <div id="exam-strip" class="exam-strip" aria-live="polite"></div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

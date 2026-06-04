@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>墨水屏看板 - 管理</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f4f0; color: #333; line-height: 1.5; }
+    .page { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .top h1 { font-size: 20px; font-weight: 700; }
+    .top-actions { display: flex; gap: 8px; }
+    .card { background: #fff; border: 1px solid #e5e3db; border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+    .card h2 { font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0eee6; }
+    .status-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .status-item { text-align: center; }
+    .status-item .label { font-size: 11px; color: #999; }
+    .status-item .value { font-size: 13px; font-weight: 600; font-family: monospace; }
+    .add-form { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .add-form input, .add-form select { flex: 1; min-width: 100px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .add-form select { flex: 0 0 90px; min-width: 90px; }
+    .add-form input:focus, .add-form select:focus { outline: none; border-color: #888; }
+    button { padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; transition: opacity 0.2s; }
+    button:hover { opacity: 0.85; }
+    button:active { opacity: 0.7; }
+    .btn-primary { background: #333; color: #fff; }
+    .btn-outline { background: #fff; border: 1px solid #ccc; color: #555; }
+    .btn-danger { background: #c0392b; color: #fff; }
+    .btn-success { background: #27ae60; color: #fff; }
+    .btn-small { padding: 4px 10px; font-size: 11px; }
+    .item-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #f5f4f0; }
+    .item-row:last-child { border-bottom: none; }
+    .item-content { flex: 1; min-width: 0; }
+    .item-name { font-size: 13px; font-weight: 500; }
+    .item-meta { font-size: 11px; color: #999; margin-top: 2px; }
+    .item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .tag { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+    .tag-red { background: #fdecea; color: #c0392b; }
+    .tag-orange { background: #fef5e7; color: #d68910; }
+    .tag-gray { background: #f0f0f0; color: #777; }
+    .tag-green { background: #e8f8f0; color: #27ae60; }
+    .tag-blue { background: #eaf0fd; color: #2563eb; }
+    .edit-row { display: flex; gap: 6px; align-items: center; padding: 8px 0; flex-wrap: wrap; }
+    .edit-row input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+    .edit-row input:focus { outline: none; border-color: #888; }
+    .plan-item { cursor: pointer; }
+    .plan-item.done .item-name { text-decoration: line-through; color: #aaa; }
+    .plan-check { font-size: 18px; font-weight: bold; width: 24px; text-align: center; }
+    .plan-check.checked { color: #27ae60; }
+    .plan-check.unchecked { color: #bbb; }
+    .plan-time { font-size: 11px; color: #888; min-width: 50px; }
+    .empty-state { padding: 16px; text-align: center; color: #bbb; font-size: 13px; }
+    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .toast-success { background: #27ae60; color: #fff; }
+    .toast-error { background: #c0392b; color: #fff; }
+    .toast-info { background: #333; color: #fff; }
+    .photo-row { display: flex; gap: 12px; align-items: center; }
+    .photo-preview { margin-top: 12px; display: none; }
+    .photo-preview img { max-width: 100%; border: 1px solid #ddd; border-radius: 6px; }
+    .network-info { font-size: 12px; color: #666; line-height: 1.8; }
+    .network-info code { padding: 2px 6px; background: #f5f4f0; border: 1px solid #e5e3db; border-radius: 3px; font-family: monospace; }
+    .section-desc { font-size: 12px; color: #888; margin-bottom: 12px; }
+    @media (max-width: 600px) {
+      .add-form { flex-direction: column; }
+      .add-form input, .add-form select { min-width: auto; }
+      .status-grid { grid-template-columns: 1fr; gap: 8px; }
+      .item-row { flex-wrap: wrap; }
+      .item-actions { width: 100%; justify-content: flex-end; margin-top: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+
+  <main class="page">
+    <header class="top">
+      <h1>墨水屏看板 - 管理</h1>
+      <div class="top-actions">
+        <button class="btn-outline" onclick="triggerRender()">刷新渲染</button>
+        <button class="btn-primary" onclick="triggerRender()">推送更新</button>
+        <a href="/epaper.html" target="_blank"><button class="btn-outline">预览</button></a>
+      </div>
+    </header>
+
+    <!-- Status -->
+    <section class="card">
+      <h2>状态</h2>
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="label">渲染时间</div>
+          <div class="value" id="renderTime">--</div>
+        </div>
+        <div class="status-item">
+          <div class="label">DDL 数量</div>
+          <div class="value" id="ddlCount">0</div>
+        </div>
+        <div class="status-item">
+          <div class="label">ETag</div>
+          <div class="value" id="etag">--</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DDL + Exam -->
+    <section class="card">
+      <h2>DDL / 考试倒计时</h2>
+      <form class="add-form" id="ddlAddForm" onsubmit="return addDDL(event)">
+        <select name="type" onchange="toggleAddFields(this.value)">
+          <option value="ddl">DDL</option>
+          <option value="exam">考试</option>
+        </select>
+        <input name="name" placeholder="任务名称" required>
+        <input name="date" placeholder="日期 (如 6/25)" style="max-width:120px;" id="addDateField">
+        <input name="days_left" type="number" placeholder="剩余天数" style="max-width:100px;" id="addDaysField">
+        <button type="submit" class="btn-primary">添加</button>
+      </form>
+      <div id="ddlList"></div>
+    </section>
+
+    <!-- Plan -->
+    <section class="card">
+      <h2>今日计划</h2>
+      <form class="add-form" id="planAddForm" onsubmit="return addPlan(event)">
+        <input name="time" placeholder="时间 (如 09:00)" style="max-width:100px;">
+        <input name="task" placeholder="任务内容" required>
+        <input name="subject" placeholder="科目" style="max-width:100px;">
+        <button type="submit" class="btn-primary">添加</button>
+      </form>
+      <div id="planList"></div>
+    </section>
+
+    <!-- Photo -->
+    <section class="card">
+      <h2>电子相册</h2>
+      <p class="section-desc">上传照片，转换为黑白墨水屏风格</p>
+      <div class="photo-row">
+        <input type="file" id="photoInput" accept="image/*">
+        <button class="btn-outline" onclick="uploadPhoto()">发送到墨水屏</button>
+      </div>
+      <div id="photoPreview" class="photo-preview">
+        <img id="photoPreviewImg" alt="预览">
+      </div>
+    </section>
+
+    <!-- Network -->
+    <section class="card">
+      <h2>PKU Secure 配网说明</h2>
+      <div class="network-info">
+        <p>1. 新固件启动后会在墨水屏显示配网页信息。</p>
+        <p>2. 手机连接设备热点 <code>PKU-Ink-Setup-020F3C</code>。</p>
+        <p>3. 打开 <code>http://192.168.4.1</code>，输入校园网账号和密码。</p>
+        <p>4. ESP32-S3 会自己用 802.1X 连接 <code>PKU Secure</code>。</p>
+        <p>5. 联网成功后继续拉取 <code>/dashboard/current.raw</code> 刷新墨水屏。</p>
+        <p style="margin-top:12px;padding:10px;background:#f5f4f0;border-radius:6px;">公网控制台只展示配网说明，不接收校园网密码。密码只填写到 ESP32-S3 自己开的本地页面里；如果要重新配网，按住 BOOT 键重启 3 秒会清除设备上的 Wi-Fi 配置。</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // === Toast ===
+    function toast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast toast-' + type;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 2500);
+    }
+
+    // === API helper ===
+    async function api(path, opts = {}) {
+      const r = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+      return r.json();
+    }
+
+    function esc(v) {
+      return String(v || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]);
+    }
+
+    // === Status ===
+    async function loadStatus() {
+      const s = await api('/dashboard/status');
+      document.getElementById('renderTime').textContent = s.render_time || '--';
+      document.getElementById('ddlCount').textContent = s.ddl_count ?? 0;
+      document.getElementById('etag').textContent = (s.etag || '--').substring(0, 12);
+    }
+
+    // === Trigger render ===
+    async function triggerRender() {
+      toast('渲染中...');
+      const d = await api('/dashboard/trigger', { method: 'POST' });
+      toast(d.ok ? '已推送到墨水屏' : '渲染失败', d.ok ? 'success' : 'error');
+      refreshAll();
+    }
+
+    // === DDL + Exam merged ===
+    let ddlEditing = null; // null or "ddl-0" / "exam-1"
+
+    function toggleAddFields(type) {
+      document.getElementById('addDaysField').style.display = type === 'exam' ? 'none' : '';
+      document.getElementById('addDateField').placeholder = type === 'exam' ? '考试日期 (如 6/25)' : '日期 (如 6/25)';
+    }
+
+    async function loadDDL() {
+      const [ddlRes, planRes] = await Promise.all([
+        api('/dashboard/ddl/list'),
+        api('/dashboard/plan/list')
+      ]);
+      const ddlItems = (ddlRes.items || []).map((item, i) => ({ ...item, _type: 'ddl', _idx: i }));
+      const examItems = (planRes.exams || []).map((item, i) => ({ ...item, _type: 'exam', _idx: i }));
+      const items = [...ddlItems, ...examItems];
+      const c = document.getElementById('ddlList');
+      if (!items.length) {
+        c.innerHTML = '<div class="empty-state">暂无 DDL / 考试</div>';
+        return;
+      }
+      c.innerHTML = items.map((item) => {
+        const key = item._type + '-' + item._idx;
+        const isEditing = ddlEditing === key;
+        if (isEditing) {
+          if (item._type === 'exam') {
+            return '<div class="edit-row">'
+              + '<input id="ddlEditName" value="' + esc(item.name) + '" placeholder="科目名称">'
+              + '<input id="ddlEditDate" value="' + esc(item.date || '') + '" placeholder="考试日期" style="width:100px;">'
+              + '<button class="btn-success btn-small" onclick="saveDDLItem(\'' + key + '\')">保存</button>'
+              + '<button class="btn-outline btn-small" onclick="cancelEdit()">取消</button>'
+              + '</div>';
+          }
+          return '<div class="edit-row">'
+            + '<input id="ddlEditName" value="' + esc(item.name) + '" placeholder="名称">'
+            + '<input id="ddlEditDate" value="' + esc(item.due_str || '') + '" placeholder="日期" style="width:90px;">'
+            + '<input id="ddlEditDays" value="' + (item.days_left ?? '') + '" placeholder="天数" type="number" style="width:70px;">'
+            + '<button class="btn-success btn-small" onclick="saveDDLItem(\'' + key + '\')">保存</button>'
+            + '<button class="btn-outline btn-small" onclick="cancelEdit()">取消</button>'
+            + '</div>';
+        }
+        const typeTag = item._type === 'exam'
+          ? '<span class="tag tag-blue" style="margin-right:6px;">考试</span>'
+          : '<span class="tag tag-gray" style="margin-right:6px;">DDL</span>';
+        const daysLeft = item.days_left;
+        const hasDays = daysLeft !== null && daysLeft !== undefined;
+        const cls = hasDays && daysLeft <= 3 ? 'tag-red'
+          : hasDays && daysLeft <= 10 ? 'tag-orange' : 'tag-gray';
+        const leftStr = hasDays
+          ? (daysLeft < 0 ? '已过期' + (-daysLeft) + '天' : '剩' + daysLeft + '天')
+          : '';
+        const urgencyText = hasDays && daysLeft <= 3 ? '紧急'
+          : hasDays && daysLeft <= 10 ? '渐近' : '';
+        const metaStr = item._type === 'exam' ? (item.date || '') : (item.due_str || '');
+        return '<div class="item-row">'
+          + '<div class="item-content">'
+          + '<div class="item-name">' + typeTag + esc(item.name) + '</div>'
+          + '<div class="item-meta">' + esc(metaStr) + (leftStr ? ' · ' + leftStr : '') + '</div>'
+          + '</div>'
+          + (urgencyText ? '<span class="tag ' + cls + '">' + urgencyText + '</span>' : '')
+          + '<div class="item-actions">'
+          + '<button class="btn-outline btn-small" onclick="startEditDDL(\'' + key + '\')">编辑</button>'
+          + '<button class="btn-danger btn-small" onclick="deleteDDLItem(\'' + key + '\')">删除</button>'
+          + '</div></div>';
+      }).join('');
+    }
+
+    function startEditDDL(key) { ddlEditing = key; loadDDL(); }
+    function cancelEdit() { ddlEditing = null; loadDDL(); }
+
+    async function saveDDLItem(key) {
+      const [type, idxStr] = key.split('-');
+      const idx = parseInt(idxStr);
+      const name = document.getElementById('ddlEditName').value.trim();
+      if (!name) { toast('名称不能为空', 'error'); return; }
+      if (type === 'exam') {
+        const dateStr = document.getElementById('ddlEditDate').value.trim();
+        await api('/dashboard/exam/edit', {
+          method: 'POST',
+          body: JSON.stringify({ action: 'update', index: idx, item: { name, date: dateStr } })
+        });
+      } else {
+        const date = document.getElementById('ddlEditDate').value.trim();
+        const days = document.getElementById('ddlEditDays').value;
+        await api('/dashboard/ddl/edit', {
+          method: 'POST',
+          body: JSON.stringify({ action: 'update', index: idx, name, due_str: date, date, days_left: days !== '' ? parseInt(days) : null })
+        });
+      }
+      ddlEditing = null;
+      toast('已更新');
+      refreshAll();
+    }
+
+    async function addDDL(e) {
+      e.preventDefault();
+      const f = new FormData(e.target);
+      const type = f.get('type');
+      const name = f.get('name')?.trim();
+      if (!name) { toast('名称不能为空', 'error'); return false; }
+      if (type === 'exam') {
+        await api('/dashboard/exam/edit', {
+          method: 'POST',
+          body: JSON.stringify({ action: 'add', item: { name, date: f.get('date') || '' } })
+        });
+      } else {
+        await api('/dashboard/ddl/edit', {
+          method: 'POST',
+          body: JSON.stringify({ action: 'add', name, date: f.get('date') || '', due_str: f.get('date') || '', days_left: f.get('days_left') !== '' ? parseInt(f.get('days_left')) : null })
+        });
+      }
+      e.target.reset();
+      toggleAddFields('ddl');
+      toast('已添加');
+      refreshAll();
+      return false;
+    }
+
+    async function deleteDDLItem(key) {
+      const [type, idxStr] = key.split('-');
+      const idx = parseInt(idxStr);
+      if (type === 'exam') {
+        await api('/dashboard/exam/edit', { method: 'POST', body: JSON.stringify({ action: 'delete', index: idx }) });
+      } else {
+        await api('/dashboard/ddl/edit', { method: 'POST', body: JSON.stringify({ action: 'delete', index: idx }) });
+      }
+      toast('已删除');
+      refreshAll();
+    }
+
+    // === Plan ===
+    let planEditing = -1;
+
+    async function loadPlan() {
+      const p = await api('/dashboard/plan/list');
+      const items = p.items || [];
+      const c = document.getElementById('planList');
+      if (!items.length) {
+        c.innerHTML = '<div class="empty-state">暂无计划</div>';
+      } else {
+        c.innerHTML = items.map((item, i) => {
+          if (planEditing === i) {
+            return '<div class="edit-row">'
+              + '<input id="planEditTime" value="' + esc(item.time || '') + '" placeholder="时间" style="width:70px;">'
+              + '<input id="planEditTask" value="' + esc(item.task || '') + '" placeholder="任务" style="flex:1;">'
+              + '<input id="planEditSubject" value="' + esc(item.subject || '') + '" placeholder="科目" style="width:70px;">'
+              + '<button class="btn-success btn-small" onclick="savePlan(' + i + ')">保存</button>'
+              + '<button class="btn-outline btn-small" onclick="cancelPlanEdit()">取消</button>'
+              + '</div>';
+          }
+          const done = item.done;
+          const checkClass = done ? 'checked' : 'unchecked';
+          const checkMark = done ? '&#10003;' : '&#9633;';
+          return '<div class="item-row plan-item' + (done ? ' done' : '') + '">'
+            + '<span class="plan-check ' + checkClass + '" onclick="tickPlan(' + i + ')" title="打钩">' + checkMark + '</span>'
+            + '<span class="plan-time">' + esc(item.time || '') + '</span>'
+            + '<div class="item-content">'
+            + '<div class="item-name">' + esc(item.task || '') + '</div>'
+            + (item.subject ? '<div class="item-meta">' + esc(item.subject) + '</div>' : '')
+            + '</div>'
+            + '<div class="item-actions">'
+            + '<button class="btn-outline btn-small" onclick="startEditPlan(' + i + ')">编辑</button>'
+            + '<button class="btn-danger btn-small" onclick="deletePlan(' + i + ')">删除</button>'
+            + '</div></div>';
+        }).join('');
+      }
+    }
+
+    function startEditPlan(i) { planEditing = i; loadPlan(); }
+    function cancelPlanEdit() { planEditing = -1; loadPlan(); }
+
+    async function savePlan(i) {
+      const time = document.getElementById('planEditTime').value.trim();
+      const task = document.getElementById('planEditTask').value.trim();
+      const subject = document.getElementById('planEditSubject').value.trim();
+      if (!task) { toast('任务不能为空', 'error'); return; }
+      const p = await api('/dashboard/plan/list');
+      const oldItem = (p.items || [])[i] || {};
+      await api('/dashboard/plan/edit', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'update', index: i, item: { time, task, subject, done: !!oldItem.done, break: !!oldItem.break_item } })
+      });
+      planEditing = -1;
+      toast('已更新');
+      refreshAll();
+    }
+
+    async function addPlan(e) {
+      e.preventDefault();
+      const f = new FormData(e.target);
+      const task = f.get('task')?.trim();
+      if (!task) { toast('任务不能为空', 'error'); return false; }
+      await api('/dashboard/plan/edit', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'add', item: { time: f.get('time') || '', task, subject: f.get('subject') || '', done: false, break: false } })
+      });
+      e.target.reset();
+      toast('已添加');
+      refreshAll();
+      return false;
+    }
+
+    async function tickPlan(i) {
+      await api('/dashboard/plan/tick', { method: 'POST', body: JSON.stringify({ index: i }) });
+      refreshAll();
+    }
+
+    async function deletePlan(i) {
+      await api('/dashboard/plan/edit', { method: 'POST', body: JSON.stringify({ action: 'delete', index: i }) });
+      toast('已删除');
+      refreshAll();
+    }
+
+    // === Photo ===
+    let photoUrl = '';
+    async function uploadPhoto() {
+      const input = document.getElementById('photoInput');
+      const file = input.files[0];
+      if (!file) { toast('请选择照片', 'error'); return; }
+      const fd = new FormData();
+      fd.append('photo', file);
+      toast('处理中...');
+      try {
+        const r = await fetch('/dashboard/photo', { method: 'POST', body: fd });
+        const d = await r.json();
+        if (!d.ok) throw new Error(d.detail || '失败');
+        toast('已发送到墨水屏');
+        const preview = document.getElementById('photoPreview');
+        const img = document.getElementById('photoPreviewImg');
+        if (photoUrl) URL.revokeObjectURL(photoUrl);
+        photoUrl = URL.createObjectURL(file);
+        img.src = photoUrl;
+        preview.style.display = 'block';
+      } catch (e) { toast('上传失败: ' + e.message, 'error'); }
+    }
+
+    // === Refresh all ===
+    async function refreshAll() {
+      await Promise.all([loadStatus(), loadDDL(), loadPlan()]);
+    }
+
+    refreshAll();
+    setInterval(refreshAll, 15000);
+  </script>
+</body>
+</html>

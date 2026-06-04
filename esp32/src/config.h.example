@@ -1,0 +1,100 @@
+#pragma once
+
+/**
+ * E-Ink Desk Dashboard — ESP32 Configuration
+ *
+ * Copy this file to config.h and edit for your setup:
+ *   cp config.h.example config.h
+ *
+ * IMPORTANT: Do NOT commit config.h with real credentials!
+ *            It is listed in .gitignore.
+ */
+
+#include <Arduino.h>
+
+// ============================================================
+// WiFi Configuration
+// ============================================================
+
+// Your WiFi network name (SSID)
+static const char WIFI_SSID[] = "YourNetworkName";
+
+// Your WiFi password
+static const char WIFI_PASS[] = "YourPassword";
+
+// ============================================================
+// Server Configuration
+// ============================================================
+
+// Base URL of the dashboard server (no trailing slash).
+// Use the IP address or hostname of the machine running the FastAPI server.
+// The ESP32 must be able to reach this address on the same network.
+// Example: "http://192.168.1.100:8646"
+static const String SERVER_BASE = "http://192.168.1.100:8646";
+
+// API endpoints (derived from SERVER_BASE — usually no need to change)
+static const String CHECK_URL = SERVER_BASE + "/dashboard/check";
+static const String RAW_URL = SERVER_BASE + "/dashboard/current.raw";
+
+// ============================================================
+// Display Pin Configuration (ESP32-S3 QFN56)
+// ============================================================
+//
+// These pins connect the ESP32 to the e-Paper HAT via SPI.
+// Adjust if using a different ESP32 variant or custom wiring.
+//
+// IMPORTANT NOTES for ESP32-S3 QFN56:
+//   - GPIO25 is NOT bonded out on QFN56 packages (do not use)
+//   - GPIO15 and GPIO26 are used by PSRAM bus (do not use for display)
+//   - If using a different board (e.g., DevKitC-1 with QFN72),
+//     you may use the default Waveshare pinout instead.
+
+// BUSY pin — display signals when it's ready for next command
+static constexpr int PIN_EPD_BUSY = 14;
+
+// CS (Chip Select) — SPI slave select for the display
+static constexpr int PIN_EPD_CS = 5;
+
+// DC (Data/Command) — selects between data and command mode
+static constexpr int PIN_EPD_DC = 21;
+
+// RST (Reset) — hardware reset pin for the display
+static constexpr int PIN_EPD_RST = 13;
+
+// MOSI (Master Out Slave In) — SPI data line
+static constexpr int PIN_EPD_MOSI = 17;
+
+// SCLK (Serial Clock) — SPI clock line
+static constexpr int PIN_EPD_SCLK = 18;
+
+// Optional button pin (active LOW, e.g., BOOT button on GPIO0)
+// Set to -1 if no button is connected
+static constexpr int PIN_BUTTON = 0;
+
+// ============================================================
+// Display Dimensions
+// ============================================================
+//
+// Waveshare 7.5" e-Paper HAT (B): 800×480, three-color (black/red/white)
+//
+// FRAME_BYTES = WIDTH × HEIGHT / 8 (one bit per pixel, packed)
+// For three-color displays, there are TWO frames: black layer + red layer
+// Total data per update = 2 × FRAME_BYTES
+
+static constexpr uint16_t DISPLAY_WIDTH = 800;
+static constexpr uint16_t DISPLAY_HEIGHT = 480;
+static constexpr size_t FRAME_BYTES = 48000;  // 800 * 480 / 8
+
+// ============================================================
+// Timing Configuration
+// ============================================================
+
+// How often (in milliseconds) the ESP32 polls the server for updates.
+// 10000ms = 10 seconds. Lower values = more responsive but more power/bandwidth.
+// For battery-powered setups, consider 60000–300000 (1–5 minutes).
+static constexpr uint32_t POLL_INTERVAL_MS = 10000;
+
+// WiFi reconnection backoff: start at MIN, double up to MAX after failures.
+// Prevents rapid retry storms when the network is down.
+static constexpr uint32_t WIFI_RETRY_MIN_MS = 1000;   // 1 second initial retry
+static constexpr uint32_t WIFI_RETRY_MAX_MS = 30000;   // 30 seconds max retry
