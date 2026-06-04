@@ -14,7 +14,7 @@ A server-rendered e-ink display system for desk productivity. Displays daily sch
 - **Weather Panel** — Real-time weather via OpenWeatherMap API
 - **Daily Quotes** — Rotating Chinese classical poetry (31 poems)
 - **Recite Mode** — Full-screen text display for memorization
-- **Photo Upload** — Render uploaded photos to e-ink bitmap
+- **Photo Mode** — Upload any photo, auto-converted to e-ink bitmap with Floyd-Steinberg dithering, displayed full-screen until dismissed
 - **Web Control Panel** — Browser-based CRUD for schedules and DDLs
 - **Smart Rendering** — HTML→Puppeteer→1-bit bitmap pipeline with PIL fallback
 - **ETag-based Polling** — ESP32 only re-downloads when content changes
@@ -258,11 +258,12 @@ All endpoints are relative to the server base URL (e.g., `http://localhost:8646`
 | `POST` | `/dashboard/recite/clear` | Clear recite mode |
 | `GET` | `/dashboard/recite/status` | Check if recite mode is active |
 
-### Photo & Other Endpoints
+### Photo Mode Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/dashboard/photo` | Upload a photo to display |
+| `POST` | `/dashboard/photo` | Upload a photo (multipart) — converts to e-ink bitmap and displays full-screen |
+| `POST` | `/dashboard/trigger` | Force re-render — also exits photo mode and restores dashboard |
 | `GET` | `/` | Web control panel (browser UI) |
 | `GET` | `/epaper.html` | The HTML dashboard page (for Puppeteer) |
 
@@ -426,6 +427,24 @@ The server uses a two-tier rendering approach:
 
 - **Primary**: Puppeteer (headless Chrome) renders the full HTML/CSS dashboard and captures a screenshot. This gives pixel-perfect output with full CSS support.
 - **Fallback**: If Chrome is unavailable, PIL (Python Imaging Library) renders a simplified layout directly to bitmap. Less visually rich but always works.
+
+### Photo Mode
+
+Upload any photo to display it full-screen on the e-ink display. The server converts the image to a 1-bit bitmap optimized for e-paper:
+
+1. **Upload** — `POST /dashboard/photo` with a multipart image file (JPEG, PNG, etc.)
+2. **Conversion** — The server resizes and crops the image to 800×480, then applies Floyd-Steinberg dithering to convert grayscale to pure black-and-white pixels
+3. **Display** — The resulting bitmap replaces the dashboard on the e-ink screen. The ESP32 detects the new ETag and downloads it on the next poll cycle
+4. **Persistence** — Photo mode stays active until you explicitly dismiss it. While active, all data edits (plan, DDL, recite) update the stored data but skip re-rendering, preserving the photo on screen
+
+To exit photo mode and return to the dashboard:
+
+```bash
+# Force re-render, which clears photo mode and restores the dashboard
+curl -X POST http://localhost:8646/dashboard/trigger
+```
+
+Photo mode is useful as a digital photo frame, for displaying diagrams or notes, or simply for fun. The Floyd-Steinberg dithering produces surprisingly good results on e-ink — portraits, landscapes, and high-contrast images all render well.
 
 ### Three-Color Support
 
